@@ -17,3 +17,45 @@ jobs:
         uses: actions/checkout@v2
         with:
           ref: ${{ github.head_ref }}  # Check out the PR branch
+
+      # Step 2: Set up Git 
+      - name: Set up Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      # Step 3: Fetch the base branch (the destination branch for the PR)
+      - name: Fetch the base branch
+        run: |
+          git fetch origin ${{ github.base_ref }}
+
+      # Step 4: Identify and resolve conflicts for files mentioned in .gitattributes
+      - name: Resolve conflicts for specific files
+        run: |
+          # Ensure the base branch is checked out
+          git checkout origin/${{ github.base_ref }}
+          
+          # List all conflicted files (those with unresolved conflicts)
+          conflicted_files=$(git ls-files -u | awk '{print $4}' | sort -u)  # List files with conflicts
+
+          echo "Conflicted files: $conflicted_files"
+          
+          if [ -z "$conflicted_files" ]; then
+            echo "No conflicted files found"
+          else
+            # Loop over the files and resolve conflicts for the specific ones
+            for file in $conflicted_files; do
+              echo "Checking conflict for $file"
+              if [[ "$file" == "test_file.txt" ]]; then
+                echo "Resolving conflict for $file"
+                git checkout --theirs "$file"  # Checkout the version from the destination branch
+                git add "$file"  # Stage the resolved file
+              fi
+            done
+          fi
+
+      # Step 5: Commit the resolved files
+      - name: Commit the resolved files
+        run: |
+          git diff --cached --quiet || git commit -m "Auto-resolve conflicts by keeping 'theirs' version for specific files"
+          git push origin HEAD:${{ github.head_ref }}  # Push the commit back to the PR branch
