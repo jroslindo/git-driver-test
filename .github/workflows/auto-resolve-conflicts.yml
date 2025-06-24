@@ -35,11 +35,14 @@ jobs:
           # Ensure the base branch is checked out
           git checkout origin/${{ github.base_ref }}
           
-          # Loop over the files mentioned in .gitattributes (example: test_file.txt)
-          # Let's assume .gitattributes has a pattern for test_file.txt that we want to resolve
-          files_to_resolve=$(git diff --name-only --diff-filter=U)  # List conflicted files
-          echo "files to resolve: " $files_to_resolve
-          for file in $files_to_resolve; do
+          # List all conflicted files (those with unresolved conflicts)
+          conflicted_files=$(git ls-files -u | awk '{print $4}' | sort -u)  # List files with conflicts
+
+          echo "Conflicted files: $conflicted_files"
+          
+          # Loop over the files and resolve conflicts for the specific ones
+          for file in $conflicted_files; do
+            # Check if the file is the one we want to resolve (e.g., test_file.txt)
             if [[ "$file" == "test_file.txt" ]]; then
               echo "Resolving conflict for $file"
               git checkout --theirs "$file"  # Checkout the version from the destination branch
