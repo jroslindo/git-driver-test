@@ -40,18 +40,22 @@ jobs:
 
           echo "Conflicted files: $conflicted_files"
           
-          # Loop over the files and resolve conflicts for the specific ones
-          for file in $conflicted_files; do
-            # Check if the file is the one we want to resolve (e.g., test_file.txt)
-            if [[ "$file" == "test_file.txt" ]]; then
-              echo "Resolving conflict for $file"
-              git checkout --theirs "$file"  # Checkout the version from the destination branch
-              git add "$file"  # Stage the resolved file
-            fi
-          done
+          if [ -z "$conflicted_files" ]; then
+            echo "No conflicted files found"
+          else
+            # Loop over the files and resolve conflicts for the specific ones
+            for file in $conflicted_files; do
+              echo "Checking conflict for $file"
+              if [[ "$file" == "test_file.txt" ]]; then
+                echo "Resolving conflict for $file"
+                git checkout --theirs "$file"  # Checkout the version from the destination branch
+                git add "$file"  # Stage the resolved file
+              fi
+            done
+          fi
 
       # Step 5: Commit the resolved files
       - name: Commit the resolved files
         run: |
-          git commit -m "Auto-resolve conflicts by keeping 'theirs' version for specific files"
+          git diff --cached --quiet || git commit -m "Auto-resolve conflicts by keeping 'theirs' version for specific files"
           git push origin HEAD:${{ github.head_ref }}  # Push the commit back to the PR branch
