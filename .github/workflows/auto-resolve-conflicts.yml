@@ -38,7 +38,7 @@ jobs:
           # Loop over the files mentioned in .gitattributes (example: test_file.txt)
           # Let's assume .gitattributes has a pattern for test_file.txt that we want to resolve
           files_to_resolve=$(git diff --name-only --diff-filter=U)  # List conflicted files
-          echo $files_to_resolve
+          echo "files to resolve: " $files_to_resolve
           for file in $files_to_resolve; do
             if [[ "$file" == "test_file.txt" ]]; then
               echo "Resolving conflict for $file"
