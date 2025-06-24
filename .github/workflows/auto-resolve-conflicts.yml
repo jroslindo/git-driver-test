@@ -1,0 +1,53 @@
+name: Auto Resolve Merge Conflicts for Specific Files
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+jobs:
+  resolve_conflicts:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the pull request
+      - name: Checkout the pull request
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.head_ref }}  # Check out the PR branch
+
+      # Step 2: Set up Git
+      - name: Set up Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      # Step 3: Fetch the base branch (the destination branch for the PR)
+      - name: Fetch the base branch
+        run: |
+          git fetch origin ${{ github.base_ref }}
+
+      # Step 4: Identify and resolve conflicts for files mentioned in .gitattributes
+      - name: Resolve conflicts for specific files
+        run: |
+          # Ensure the base branch is checked out
+          git checkout origin/${{ github.base_ref }}
+          
+          # Loop over the files mentioned in .gitattributes (example: test_file.txt)
+          # Let's assume .gitattributes has a pattern for test_file.txt that we want to resolve
+          files_to_resolve=$(git diff --name-only --diff-filter=U)  # List conflicted files
+          for file in $files_to_resolve; do
+            if [[ "$file" == "test_file.txt" ]]; then
+              echo "Resolving conflict for $file"
+              git checkout --theirs "$file"  # Checkout the version from the destination branch
+              git add "$file"  # Stage the resolved file
+            fi
+          done
+
+      # Step 5: Commit the resolved files
+      - name: Commit the resolved files
+        run: |
+          git commit -m "Auto-resolve conflicts by keeping 'theirs' version for specific files"
+          git push origin HEAD:${{ github.head_ref }}  # Push the commit back to the PR branch
