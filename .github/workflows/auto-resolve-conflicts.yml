@@ -1,11 +1,15 @@
 name: Auto Resolve Merge Conflicts for Specific Files
 
+# on:
+#   pull_request:
+#     types:
+#       - opened
+#       - synchronize
+#       - reopened
 on:
-  pull_request:
-    types:
-      - opened
-      - synchronize
-      - reopened
+  push:
+    branches:
+      - ${{ github.head_ref }}  # This triggers on push to the PR branch
 
 jobs:
   resolve_conflicts:
